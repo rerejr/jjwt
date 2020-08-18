@@ -1,4 +1,4 @@
-package io.jsonwebtoken.impl.crypto
+package io.jsonwebtoken.impl.security
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.SignatureAlgorithm

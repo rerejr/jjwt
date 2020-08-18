@@ -36,9 +36,6 @@ import io.jsonwebtoken.PrematureJwtException;
 import io.jsonwebtoken.SigningKeyResolver;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.impl.compression.DefaultCompressionCodecResolver;
-import io.jsonwebtoken.impl.crypto.DefaultSignatureValidatorFactory;
-import io.jsonwebtoken.impl.crypto.SignatureValidator;
-import io.jsonwebtoken.impl.crypto.SignatureValidatorFactory;
 import io.jsonwebtoken.impl.lang.LegacyServices;
 import io.jsonwebtoken.impl.security.DefaultVerifySignatureRequest;
 import io.jsonwebtoken.io.Decoder;
@@ -673,8 +670,6 @@ public class DefaultJwtParser implements JwtParser {
                 VerifySignatureRequest request =
                     new DefaultVerifySignatureRequest(data, key, this.provider, null, signature);
 
-                //SignatureValidator validator = DefaultSignatureValidatorFactory.INSTANCE.createSignatureValidator(io.jsonwebtoken.SignatureAlgorithm.forName(algorithm.getName()), key);
-                // if (!validator.isValid(data, signature)) {
                 if (!algorithm.verify(request)) {
                     String msg = "JWT signature does not match locally computed signature. JWT validity cannot be " +
                         "asserted and should not be trusted.";
