@@ -142,13 +142,16 @@ public class MacSignatureAlgorithm extends AbstractSignatureAlgorithm implements
 
         // https://github.com/jwtk/jjwt/issues/478
         //
-        // Some HSM modules will not allow applications or libraries to obtain the secret key's encoded bytes.  In
-        // these cases, key length assertions cannot be made, so we'll need to skip the key length checks if so.
+        // Some KeyStore implementations (like Hardware Security Modules and later versions of Android) will not allow
+        // applications or libraries to obtain the secret key's encoded bytes.  In these cases, key length assertions
+        // cannot be made, so we'll need to skip the key length checks if so.
         try {
             encoded = key.getEncoded();
         } catch (Exception ignored) {
         }
 
+        // We can only perform length validation if key.getEncoded() is not null or does not throw an exception
+        // per https://github.com/jwtk/jjwt/issues/478 and https://github.com/jwtk/jjwt/issues/619
         if (encoded != null) { //we can perform key length assertions
             int size = Arrays.length(encoded) * Byte.SIZE;
             if (size < this.minKeyLength) {

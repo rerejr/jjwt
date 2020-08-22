@@ -28,8 +28,33 @@ abstract class CryptoAlgorithm implements Named {
         return this.jcaName;
     }
 
-    SecureRandom ensureSecureRandom(CryptoRequest request) {
+    SecureRandom ensureSecureRandom(CryptoRequest<?,?> request) {
         SecureRandom random = request.getSecureRandom();
         return random != null ? random : Randoms.secureRandom();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof CryptoAlgorithm) {
+            CryptoAlgorithm other = (CryptoAlgorithm)obj;
+            return this.name.equals(other.getName()) && this.jcaName.equals(other.getJcaName());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + name.hashCode();
+        hash = 31 * hash + jcaName.hashCode();
+        return hash;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

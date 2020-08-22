@@ -47,23 +47,6 @@ class DeprecatedJwtParserTest {
     }
 
     @Test
-    void testSetDuplicateSigningKeys() {
-
-        byte[] keyBytes = randomKey()
-
-        SecretKeySpec key = new SecretKeySpec(keyBytes, "HmacSHA256")
-
-        String compact = Jwts.builder().setPayload('Hello World!').signWith(SignatureAlgorithm.HS256, keyBytes).compact()
-
-        try {
-            Jwts.parser().setSigningKey(keyBytes).setSigningKey(key).parse(compact)
-            fail()
-        } catch (IllegalStateException ise) {
-            assertEquals ise.getMessage(), 'A key object and key bytes cannot both be specified. Choose either.'
-        }
-    }
-
-    @Test
     void testIsSignedWithNullArgument() {
         assertFalse Jwts.parser().isSigned(null)
     }
@@ -655,7 +638,7 @@ class DeprecatedJwtParserTest {
             Jwts.parser().setSigningKey(key).setSigningKeyResolver(signingKeyResolver).parseClaimsJws(compact)
             fail()
         } catch (IllegalStateException ise) {
-            assertEquals ise.getMessage(), 'A signing key resolver and a key object cannot both be specified. Choose either.'
+            assertEquals 'A key and a signing key resolver cannot both be specified. Choose either.', ise.getMessage()
         }
     }
 
@@ -679,7 +662,7 @@ class DeprecatedJwtParserTest {
             Jwts.parser().setSigningKey(key).setSigningKeyResolver(signingKeyResolver).parseClaimsJws(compact)
             fail()
         } catch (IllegalStateException ise) {
-            assertEquals ise.getMessage(), 'A signing key resolver and key bytes cannot both be specified. Choose either.'
+            assertEquals 'A key and a signing key resolver cannot both be specified. Choose either.', ise.getMessage()
         }
     }
 
@@ -1510,32 +1493,17 @@ class DeprecatedJwtParserTest {
     }
 
     @Test
-    void testNoHeaderNoSig() {
+    void testNoProtectedHeader() {
 
-        String payload = '{"subject":"Joe"}'
+        String payload = '{"sub":"Joe"}'
 
         String jwtStr = '.' + base64Url(payload) + '.'
 
-        Jwt jwt = Jwts.parser().parse(jwtStr)
-
-        assertTrue jwt.header == null
-        assertEquals 'Joe', jwt.body.get('subject')
-    }
-
-    @Test
-    void testNoHeaderSig() {
-
-        String payload = '{"subject":"Joe"}'
-
-        String sig = ";aklsjdf;kajsd;fkjas;dklfj"
-
-        String jwtStr = '.' + base64Url(payload) + '.' + base64Url(sig)
-
         try {
-            Jwts.parser().parse(jwtStr)
+            Jwts.parserBuilder().build().parse(jwtStr)
             fail()
-        } catch (MalformedJwtException se) {
-            assertEquals 'JWT string has a digest/signature, but the header does not reference a valid signature algorithm.', se.message
+        } catch (MalformedJwtException e) {
+            assertEquals 'Compact JWT strings MUST always have a Base64Url protected header per https://tools.ietf.org/html/rfc7519#section-7.2 (steps 2-4).', e.getMessage()
         }
     }
 

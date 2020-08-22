@@ -27,6 +27,7 @@ import io.jsonwebtoken.io.Decoder;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Deserializer;
 import io.jsonwebtoken.lang.Assert;
+import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 import java.security.Provider;
@@ -52,8 +53,6 @@ public class DefaultJwtParserBuilder implements JwtParserBuilder {
 
     private Provider provider;
 
-    private byte[] keyBytes;
-
     private Key key;
 
     private SigningKeyResolver signingKeyResolver;
@@ -64,7 +63,7 @@ public class DefaultJwtParserBuilder implements JwtParserBuilder {
 
     private Deserializer<Map<String, ?>> deserializer;
 
-    private Claims expectedClaims = new DefaultClaims();
+    private final Claims expectedClaims = new DefaultClaims();
 
     private Clock clock = DefaultClock.INSTANCE;
 
@@ -157,15 +156,14 @@ public class DefaultJwtParserBuilder implements JwtParserBuilder {
     @Override
     public JwtParserBuilder setSigningKey(byte[] key) {
         Assert.notEmpty(key, "signing key cannot be null or empty.");
-        this.keyBytes = key;
-        return this;
+        return setSigningKey(Keys.hmacShaKeyFor(key));
     }
 
     @Override
     public JwtParserBuilder setSigningKey(String base64EncodedSecretKey) {
         Assert.hasText(base64EncodedSecretKey, "signing key cannot be null or empty.");
-        this.keyBytes = Decoders.BASE64.decode(base64EncodedSecretKey);
-        return this;
+        byte[] bytes = Decoders.BASE64.decode(base64EncodedSecretKey);
+        return setSigningKey(bytes);
     }
 
     @Override
@@ -196,6 +194,7 @@ public class DefaultJwtParserBuilder implements JwtParserBuilder {
         // that is NOT exposed as a service and no other implementations are available for lookup.
         if (this.deserializer == null) {
             // try to find one based on the services available:
+            //noinspection unchecked
             this.deserializer = Services.loadFirst(Deserializer.class);
         }
 
@@ -208,7 +207,6 @@ public class DefaultJwtParserBuilder implements JwtParserBuilder {
                 new DefaultJwtParser(provider,
                                      signingKeyResolver,
                                      key,
-                                     keyBytes,
                                      clock,
                                      allowedClockSkewMillis,
                                      expectedClaims,

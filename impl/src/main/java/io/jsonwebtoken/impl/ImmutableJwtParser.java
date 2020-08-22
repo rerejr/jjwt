@@ -139,8 +139,8 @@ class ImmutableJwtParser implements JwtParser {
     }
 
     @Override
-    public boolean isSigned(String jwt) {
-        return this.jwtParser.isSigned(jwt);
+    public boolean isSigned(String compact) {
+        return this.jwtParser.isSigned(compact);
     }
 
     @Override

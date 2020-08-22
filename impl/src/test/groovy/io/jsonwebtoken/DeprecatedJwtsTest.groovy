@@ -164,14 +164,9 @@ class DeprecatedJwtsTest {
         }
     }
 
-    @Test
+    @Test(expected = MalformedJwtException)
     void testParseWithTwoPeriodsOnly() {
-        try {
-            Jwts.parser().parse('..')
-            fail()
-        } catch (MalformedJwtException e) {
-            assertEquals e.message, "JWT string '..' is missing a header."
-        }
+        Jwts.parser().parse('..')
     }
 
     @Test
@@ -181,24 +176,9 @@ class DeprecatedJwtsTest {
         assertEquals("none", jwt.getHeader().get("alg"))
     }
 
-    @Test
+    @Test(expected = MalformedJwtException)
     void testParseWithSignatureOnly() {
-        try {
-            Jwts.parser().parse('..bar')
-            fail()
-        } catch (MalformedJwtException e) {
-            assertEquals e.message, "JWT string has a digest/signature, but the header does not reference a valid signature algorithm."
-        }
-    }
-
-    @Test
-    void testWithInvalidCompressionAlgorithm() {
-        try {
-
-            Jwts.builder().setHeaderParam(Header.COMPRESSION_ALGORITHM, "CUSTOM").setId("andId").compact()
-        } catch (CompressionException e) {
-            assertEquals "Unsupported compression algorithm 'CUSTOM'", e.getMessage()
-        }
+        Jwts.parser().parse('..bar')
     }
 
     @Test

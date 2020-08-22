@@ -394,11 +394,11 @@ public interface JwtParser {
      * <p>Note that if you are reasonably sure that the token is signed, it is more efficient to attempt to
      * parse the token (and catching exceptions if necessary) instead of calling this method first before parsing.</p>
      *
-     * @param jwt the compact serialized JWT to check
+     * @param compact the compact serialized JWT to check
      * @return {@code true} if the specified JWT compact string represents a signed JWT (aka a 'JWS'), {@code false}
      * otherwise.
      */
-    boolean isSigned(String jwt);
+    boolean isSigned(String compact);
 
     /**
      * Parses the specified compact serialized JWT string based on the builder's current configuration state and

@@ -218,7 +218,9 @@ public interface JwtParserBuilder {
      * @param base64EncodedSecretKey the BASE64-encoded algorithm-specific signature verification key to use to validate
      *                               any discovered JWS digital signature.
      * @return the parser builder for method chaining.
+     * @deprecated as of 0.10.0.
      */
+    @Deprecated
     JwtParserBuilder setSigningKey(String base64EncodedSecretKey);
 
     /**

@@ -24,4 +24,15 @@ public class NoneSignatureAlgorithm implements SignatureAlgorithm {
     public boolean verify(VerifySignatureRequest request) throws SignatureException {
         throw new SignatureException("The 'none' algorithm cannot be used to verify signatures.");
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj ||
+            (obj instanceof SignatureAlgorithm && NAME.equalsIgnoreCase(((SignatureAlgorithm)obj).getName()));
+    }
+
+    @Override
+    public int hashCode() {
+        return getName().hashCode();
+    }
 }

@@ -21,4 +21,9 @@ class NoneSignatureAlgorithmTest {
     void testVerify() {
         new NoneSignatureAlgorithm().verify(null)
     }
+
+    @Test
+    void testHashCode() {
+        assertEquals 'none'.hashCode(), new NoneSignatureAlgorithm().hashCode()
+    }
 }
