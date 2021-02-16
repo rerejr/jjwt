@@ -18,21 +18,21 @@ public final class EncryptionAlgorithms {
     private EncryptionAlgorithms() {
     }
 
-    private static final Class MAC_CLASS = Classes.forName("io.jsonwebtoken.impl.security.MacSignatureAlgorithm");
+    private static final Class<?> MAC_CLASS = Classes.forName("io.jsonwebtoken.impl.security.MacSignatureAlgorithm");
     private static final String HMAC = "io.jsonwebtoken.impl.security.HmacAesEncryptionAlgorithm";
-    private static final Class[] HMAC_ARGS = new Class[]{String.class, MAC_CLASS};
+    private static final Class<?>[] HMAC_ARGS = new Class[]{String.class, MAC_CLASS};
 
     private static final String GCM = "io.jsonwebtoken.impl.security.GcmAesEncryptionAlgorithm";
-    private static final Class[] GCM_ARGS = new Class[]{String.class, int.class};
+    private static final Class<?>[] GCM_ARGS = new Class[]{String.class, int.class};
 
-    private static AeadSymmetricEncryptionAlgorithm hmac(int keyLength) {
+    private static AeadSymmetricEncryptionAlgorithm<byte[]> hmac(int keyLength) {
         int digestLength = keyLength * 2;
         String name = "A" + keyLength + "CBC-HS" + digestLength;
         SignatureAlgorithm macSigAlg = Classes.newInstance(SignatureAlgorithms.HMAC, SignatureAlgorithms.HMAC_ARGS, name, "HmacSHA" + digestLength, keyLength);
         return Classes.newInstance(HMAC, HMAC_ARGS, name, macSigAlg);
     }
 
-    private static AeadSymmetricEncryptionAlgorithm gcm(int keyLength) {
+    private static AeadSymmetricEncryptionAlgorithm<byte[]> gcm(int keyLength) {
         String name = "A" + keyLength + "GCM";
         return Classes.newInstance(GCM, GCM_ARGS, name, keyLength);
     }
@@ -42,44 +42,44 @@ public final class EncryptionAlgorithms {
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.2.3">RFC 7518, Section 5.2.3</a>.  This algorithm
      * requires a 256 bit (32 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A128CBC_HS256 = hmac(128);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A128CBC_HS256 = hmac(128);
 
     /**
      * AES_192_CBC_HMAC_SHA_384 authenticated encryption algorithm, as defined by
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.2.4">RFC 7518, Section 5.2.4</a>. This algorithm
      * requires a 384 bit (48 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A192CBC_HS384 = hmac(192);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A192CBC_HS384 = hmac(192);
 
     /**
      * AES_256_CBC_HMAC_SHA_512 authenticated encryption algorithm, as defined by
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.2.5">RFC 7518, Section 5.2.5</a>.  This algorithm
      * requires a 512 bit (64 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A256CBC_HS512 = hmac(256);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A256CBC_HS512 = hmac(256);
 
     /**
      * &quot;AES GCM using 128-bit key&quot; as defined by
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.3">RFC 7518, Section 5.3</a>.  This algorithm requires
      * a 128 bit (16 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A128GCM = gcm(128);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A128GCM = gcm(128);
 
     /**
      * &quot;AES GCM using 192-bit key&quot; as defined by
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.3">RFC 7518, Section 5.3</a>.  This algorithm requires
      * a 192 bit (24 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A192GCM = gcm(192);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A192GCM = gcm(192);
 
     /**
      * &quot;AES GCM using 256-bit key&quot; as defined by
      * <a href="https://tools.ietf.org/html/rfc7518#section-5.3">RFC 7518, Section 5.3</a>.  This algorithm requires
      * a 256 bit (32 byte) key.
      */
-    public static final AeadSymmetricEncryptionAlgorithm A256GCM = gcm(256);
+    public static final AeadSymmetricEncryptionAlgorithm<byte[]> A256GCM = gcm(256);
 
-    private static final Map<String, AeadSymmetricEncryptionAlgorithm> SYMMETRIC_VALUES_BY_NAME = Collections.unmodifiableMap(Maps
+    private static final Map<String, AeadSymmetricEncryptionAlgorithm<byte[]>> SYMMETRIC_VALUES_BY_NAME = Collections.unmodifiableMap(Maps
         .of(A128CBC_HS256.getName(), A128CBC_HS256)
         .and(A192CBC_HS384.getName(), A192CBC_HS384)
         .and(A256CBC_HS512.getName(), A256CBC_HS512)
@@ -88,9 +88,9 @@ public final class EncryptionAlgorithms {
         .and(A256GCM.getName(), A256GCM)
         .build());
 
-    public static EncryptionAlgorithm forName(String name) {
+    public static AeadSymmetricEncryptionAlgorithm<byte[]> forName(String name) {
         Assert.hasText(name, "name cannot be null or empty.");
-        EncryptionAlgorithm alg = SYMMETRIC_VALUES_BY_NAME.get(name.toUpperCase());
+        AeadSymmetricEncryptionAlgorithm<byte[]> alg = SYMMETRIC_VALUES_BY_NAME.get(name.toUpperCase());
         if (alg == null) {
             String msg = "'" + name + "' is not a JWE specification standard name.  The standard names are: " +
             Strings.collectionToCommaDelimitedString(SYMMETRIC_VALUES_BY_NAME.keySet());
@@ -99,7 +99,7 @@ public final class EncryptionAlgorithms {
         return alg;
     }
 
-    public static Collection<AeadSymmetricEncryptionAlgorithm> symmetric() {
+    public static Collection<AeadSymmetricEncryptionAlgorithm<byte[]>> values() {
         return SYMMETRIC_VALUES_BY_NAME.values();
     }
 }

@@ -596,7 +596,7 @@ class DeprecatedJwtsTest {
         String forged = Jwts.builder().setSubject("Not Joe").compact()
 
         //assert that our forged header has a 'NONE' algorithm:
-        assertEquals Jwts.parser().parseClaimsJwt(forged).getHeader().get('alg'), 'none'
+        assertEquals 'none', Jwts.parser().parseClaimsJwt(forged).getHeader().get('alg')
 
         //now let's forge it by appending the signature the server expects:
         forged += signature
@@ -606,7 +606,7 @@ class DeprecatedJwtsTest {
             Jwts.parser().setSigningKey(key).parse(forged)
             fail("Parsing must fail for a forged token.")
         } catch (MalformedJwtException expected) {
-            assertEquals expected.message, 'JWT string has a digest/signature, but the header does not reference a valid signature algorithm.'
+            assertEquals 'The JWS header references signature algorithm \'none\' yet the compact JWS string has a digest/signature. This is not permitted per https://tools.ietf.org/html/rfc7518#section-3.6.', expected.message
         }
     }
 

@@ -67,7 +67,7 @@ class DeprecatedJwtParserTest {
             Jwts.parser().parse(bad)
             fail()
         } catch (MalformedJwtException expected) {
-            assertEquals expected.getMessage(), 'Unable to read JSON value: ' + junkPayload
+            assertEquals 'Unable to read claims JSON: ' + junkPayload, expected.getMessage()
         }
     }
 
@@ -127,7 +127,7 @@ class DeprecatedJwtParserTest {
             Jwts.parserBuilder().setSigningKey(randomKey()).build().parse(bad)
             fail()
         } catch (MalformedJwtException se) {
-            assertEquals se.getMessage(), 'JWT string has a digest/signature, but the header does not reference a valid signature algorithm.'
+            assertEquals 'The JWS header references signature algorithm \'none\' yet the compact JWS string has a digest/signature. This is not permitted per https://tools.ietf.org/html/rfc7518#section-3.6.', se.getMessage()
         }
 
     }
@@ -1522,7 +1522,7 @@ class DeprecatedJwtParserTest {
             Jwts.parser().parse(jwtStr)
             fail()
         } catch (MalformedJwtException se) {
-            assertEquals 'JWT string has a digest/signature, but the header does not reference a valid signature algorithm.', se.message
+            assertEquals 'The JWS header references signature algorithm \'none\' yet the compact JWS string has a digest/signature. This is not permitted per https://tools.ietf.org/html/rfc7518#section-3.6.', se.message
         }
     }
 

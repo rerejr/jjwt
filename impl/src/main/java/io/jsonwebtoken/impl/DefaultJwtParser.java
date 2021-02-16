@@ -24,6 +24,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.InvalidClaimException;
+import io.jsonwebtoken.JweHeader;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwt;
@@ -251,7 +252,7 @@ public class DefaultJwtParser implements JwtParser {
     }
 
     @Override
-    public Jwt parse(String compact) throws ExpiredJwtException, MalformedJwtException, SignatureException {
+    public Jwt<?,?> parse(String compact) throws ExpiredJwtException, MalformedJwtException, SignatureException {
 
         // TODO, this logic is only need for a now deprecated code path
         // remove this block in v1.0 (the equivalent is already in DefaultJwtParserBuilder)
@@ -271,9 +272,10 @@ public class DefaultJwtParser implements JwtParser {
         }
 
         // =============== Header =================
-        byte[] bytes = base64UrlDecode(base64UrlHeader);
+        byte[] bytes = base64UrlDecode(base64UrlHeader, "protected header");
         String origValue = new String(bytes, Strings.UTF_8);
-        Map<String, Object> m = (Map<String, Object>) readValue(origValue);
+        Map<String, ?> m = readValue(origValue, "protected header" );
+        @SuppressWarnings("rawtypes")
         Header header = tokenized instanceof TokenizedJwe ? new DefaultJweHeader(m) : new DefaultJwsHeader(m);
 
         // https://tools.ietf.org/html/rfc7515#section-10.7 , second-to-last bullet point, note the use of 'always':
@@ -288,10 +290,9 @@ public class DefaultJwtParser implements JwtParser {
             throw new MalformedJwtException(msg);
         }
 
-        CompressionCodec compressionCodec = compressionCodecResolver.resolveCompressionCodec(header);
-
         // =============== Body =================
-        bytes = base64UrlDecode(tokenized.getBody()); // body can be empty per https://github.com/jwtk/jjwt/pull/540
+        CompressionCodec compressionCodec = compressionCodecResolver.resolveCompressionCodec(header);
+        bytes = base64UrlDecode(tokenized.getBody(), "payload"); // body can be empty per https://github.com/jwtk/jjwt/pull/540
         if (compressionCodec != null) {
             bytes = compressionCodec.decompress(bytes);
         }
@@ -299,7 +300,7 @@ public class DefaultJwtParser implements JwtParser {
 
         Claims claims = null;
         if (!payload.isEmpty() && payload.charAt(0) == '{' && payload.charAt(payload.length() - 1) == '}') { //likely to be json, parse it:
-            Map<String, Object> claimsMap = (Map<String, Object>) readValue(payload);
+            Map<String, ?> claimsMap = readValue(payload, "claims");
             claims = new DefaultClaims(claimsMap);
         }
 
@@ -327,8 +328,8 @@ public class DefaultJwtParser implements JwtParser {
             String digest = tokenized.getDigest();
 
             if (SignatureAlgorithms.NONE.equals(algorithm) && Strings.hasText(digest)) {
-                //it is plaintext, but it has a signature.  This is invalid:
-                String msg = "JWT string has a digest/signature, but the header does not reference a valid signature algorithm.";
+                //'none' algorithm, but it has a signature.  This is invalid:
+                String msg = "The JWS header references signature algorithm '" + alg + "' yet the compact JWS string has a digest/signature. This is not permitted per https://tools.ietf.org/html/rfc7518#section-3.6.";
                 throw new MalformedJwtException(msg);
             } else if (!Strings.hasText(digest)) {
                 String msg = "The JWS header references signature algorithm '" + alg + "' but the compact JWS string does not have a signature token.";
@@ -352,11 +353,11 @@ public class DefaultJwtParser implements JwtParser {
 
             Assert.notNull(key, "A signature verification key is required if the specified JWT is digitally signed.");
 
-            //re-create the jwt part without the signature.  This is what needs to be signed for verification:
+            //re-create the jwt part without the signature.  This is what is needed for signature verification:
             String jwtWithoutSignature = tokenized.getProtected() + SEPARATOR_CHAR + tokenized.getBody();
 
             byte[] data = jwtWithoutSignature.getBytes(StandardCharsets.US_ASCII);
-            byte[] signature = base64UrlDecode(tokenized.getDigest());
+            byte[] signature = base64UrlDecode(tokenized.getDigest(), "JWS signature");
 
             try {
                 VerifySignatureRequest request =
@@ -372,12 +373,12 @@ public class DefaultJwtParser implements JwtParser {
             } catch (InvalidKeyException | IllegalArgumentException e) {
                 String algName = algorithm.getName();
                 String msg = "The parsed JWT indicates it was signed with the " + algName + " signature " +
-                    "algorithm, but the specified signing key of type " + key.getClass().getName() +
-                    " may not be used to validate " + algName + " signatures.  Because the specified " +
-                    "signing key reflects a specific and expected algorithm, and the JWT does not reflect " +
+                    "algorithm, but the specified verification key of type " + key.getClass().getName() +
+                    " may not be used to validate " + algName + " signatures.  Because the verification " +
+                    "key reflects a specific and expected algorithm, and the JWT does not reflect " +
                     "this algorithm, it is likely that the JWT was not expected and therefore should not be " +
-                    "trusted.  Another possibility is that the parser was configured with the incorrect " +
-                    "signing key, but this cannot be assumed for security reasons.";
+                    "trusted.  Another possibility is that the parser was supplied with the incorrect " +
+                    "verification key, but this cannot be assumed for security reasons.";
                 throw new UnsupportedJwtException(msg, e);
             }
         }
@@ -495,10 +496,10 @@ public class DefaultJwtParser implements JwtParser {
         Assert.notNull(handler, "JwtHandler argument cannot be null.");
         Assert.hasText(compact, "JWT String argument cannot be null or empty.");
 
-        Jwt jwt = parse(compact);
+        Jwt<?,?> jwt = parse(compact);
 
         if (jwt instanceof Jws) {
-            Jws jws = (Jws) jwt;
+            Jws<?> jws = (Jws<?>) jwt;
             Object body = jws.getBody();
             if (body instanceof Claims) {
                 return handler.onClaimsJws((Jws<Claims>) jws);
@@ -563,22 +564,22 @@ public class DefaultJwtParser implements JwtParser {
         });
     }
 
-    protected byte[] base64UrlDecode(String base64UrlEncoded) {
+    protected byte[] base64UrlDecode(String base64UrlEncoded, String name) {
         try {
             return base64UrlDecoder.decode(base64UrlEncoded);
         } catch (DecodingException e) {
-            String msg = "Invalid Base64Url string: " + base64UrlEncoded;
+            String msg = "Invalid Base64Url " + name + ": " + base64UrlEncoded;
             throw new MalformedJwtException(msg, e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    protected Map<String, ?> readValue(String val) {
+    protected Map<String, ?> readValue(String val, final String name) {
         try {
             byte[] bytes = val.getBytes(Strings.UTF_8);
             return deserializer.deserialize(bytes);
         } catch (DeserializationException e) {
-            throw new MalformedJwtException("Unable to read JSON value: " + val, e);
+            throw new MalformedJwtException("Unable to read " + name + " JSON: " + val, e);
         }
     }
 }

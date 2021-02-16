@@ -42,7 +42,7 @@ class EncryptionAlgorithmsTest {
     @Test
     void testWithoutAad() {
 
-        for (EncryptionAlgorithm alg : EncryptionAlgorithms.symmetric()) {
+        for (EncryptionAlgorithm alg : EncryptionAlgorithms.values()) {
 
             assert alg instanceof AeadSymmetricEncryptionAlgorithm
 
@@ -75,7 +75,7 @@ class EncryptionAlgorithmsTest {
     @Test
     void testWithAad() {
 
-        for (EncryptionAlgorithm alg : EncryptionAlgorithms.symmetric()) {
+        for (EncryptionAlgorithm alg : EncryptionAlgorithms.values()) {
 
             assert alg instanceof AeadSymmetricEncryptionAlgorithm
 
