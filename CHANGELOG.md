@@ -1,5 +1,11 @@
 ## Release Notes
 
+### 0.11.3 (pending release)
+
+This patch release:
+
+* Upgrades the `jjwt-jackson` module's Jackson dependency to `2.9.10.7`.
+
 ### 0.11.2
 
 This patch release:
